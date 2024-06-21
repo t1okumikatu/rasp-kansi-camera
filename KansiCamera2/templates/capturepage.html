@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<HTML>
+<HEAD>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>{{TITLE | safe}}</title>
+    <style>
+        #root{text-align: center;}
+        #Back{position: fixed;top: 0;left: 0;background-color: #EA0;font-size: 16px;}
+        #Next{position: fixed;top: 0;right: 0;background-color: #0AE;font-size: 16px;}
+
+        #SubMenu{position: fixed;text-align: center; left: 0;right: 0;margin: auto; top: 5%;width: 300px; border-radius: 10px;background-color: #EEE;border-style: solid;}
+        #ConvMP4{position: relative;background-color: #AFA;font-size: 16px;width: 200px;height: 40px;}
+        #Remove{position: relative;background-color: #FAA;font-size: 16px;width: 200px;height: 40px;}
+        #Cancel{position: relative;background-color: #EAE;font-size: 16px;width: 200px;height: 40px;}
+        #Box_FPS{position: relative;width: 50px;}
+
+    </style>
+    <script>
+        window.addEventListener("DOMContentLoaded",Init); //必須
+        let Mode = '{{MODE}}';
+        let filename = "";
+        function Init(){
+            let NextButton = document.querySelector("#Next");
+            let BackButton = document.querySelector("#Back");
+            NextButton.disabled = {{NextDisabled | safe }};
+            BackButton.disabled = {{BackDisabled | safe }};
+            NextButton.addEventListener("click",function(){
+                window.location.href="/captures?page={{NextPage | safe }}"
+            });
+            BackButton.addEventListener("click",function(){
+                window.location.href="/captures?page={{BackPage | safe }}"
+            });
+            if(Mode == "capt"){
+                document.querySelector("#ConvMP4").disabled = !false;
+                document.querySelector("#Box_FPS").disabled = !false;
+            }
+
+            document.querySelector("#SubMenu").style.display = "none";
+            document.querySelector("#Cancel").addEventListener("click",function(){
+                document.querySelector("#SubMenu").style.display = "none";
+            });
+
+            document.querySelector("#Remove").addEventListener("click",function(){
+                document.querySelector("#SubMenu").style.display = "none";
+                if(Mode == "rec"){
+                    fetch("/rmfiles?name=" + filename.replace(".jpg",".h264")); //H264の場合は画像なので
+                } else {
+                    fetch("/rmfiles?name=" + filename);
+                }
+                window.setTimeout(function(){window.location.reload();},1000);
+            });
+
+            document.querySelector("#ConvMP4").addEventListener("click",function(){
+                let URL = "recordsConv?name=" + filename + "&fps=" + document.querySelector("#Box_FPS").value;
+                fetch(URL)
+                .then(Response=>{
+                    return Response.text();
+                }).then(text=>{
+                    if(text != "ERR"){
+                        document.querySelector("#ConvMP4").disabled = !false;
+                        window.setTimeout(MakeDataStatus,1000);
+                    }
+                });
+            });
+        }
+        
+        function Showmsg(e){
+            document.querySelector("#SubMenu").style.display = "block";
+            filename = e.src.replace(/\\/g, '/').replace(/^[^/]*\/\/[^/]*/, '');
+            document.querySelector("#Box_FPS").value = filename.split(".")[0].split("_")[1];
+            //document.querySelector("#Fname").innerHTML = filename;
+        }
+
+        function MakeDataStatus(){
+            fetch("/recordsConvStatus")
+            .then(Responce=>{
+                return Responce.text();
+            }).then(text=>{
+                if(text == ""){
+                    let ten = document.querySelector("#ConvMP4").innerHTML;
+                    if(ten.length >= 5){
+                        ten = ".";
+                    }else{
+                        ten += ".";
+                    }
+                    document.querySelector("#ConvMP4").innerHTML = ten;
+                    window.setTimeout(MakeDataStatus,1000);
+                } else {
+                    document.querySelector("#ConvMP4").disabled = !true;
+                    window.setTimeout(function(){window.location.reload();},100);
+                }
+            });
+        }
+    </script>
+</HEAD>
+<body>
+
+    <div id="root">
+        <h1>{{TITLE | safe}}</h1>
+        <HR>
+        <div id="CaptureArea">
+            {{Inserthtml | safe }}
+        </div>
+        <button id="Back">前のページ</button> <button id="Next">次のページ</button>
+        <HR>
+        <a href="/">TOP</a>
+    </div>
+    <div id="SubMenu">
+        <h3>サブメニュー</h3>
+        <fieldset>
+            <legend>操作</legend>
+            <button id="ConvMP4">MP4に変換</button><br>
+            <button id="Remove">削除</button><br>
+            <button id="Cancel">キャンセル</button><br>
+        </fieldset>
+        <fieldset>
+            <legend>MP4設定</legend>
+            FPS<input type="text" id="Box_FPS" value="2">
+        </fieldset>
+
+    </div>
+</body>
+</HTML>

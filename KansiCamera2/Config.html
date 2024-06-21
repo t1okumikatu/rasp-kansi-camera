@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<HTML>
+<HEAD>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>設定</title>
+    <style>
+        #root{text-align: center;}
+        #SplitSize{position: relative;width: 50px;}
+        #AutoUploadStorage{position: relative;width: 30px;}
+        #AutoUploadURL{position: relative;width: 300px;}
+        #ConvxN{position: relative;width: 30px;}
+        #Apply{position: fixed;top: 0;right: 0; width: 60px;height: auto;font-size: 14px;background-color: #CFC;color: #000;border-radius: 10px;}
+        #System{position: fixed;top: 0;left: 0;}
+        #Reboot{position: relative;width: 120px;color: #000;background-color: #FAF;border-radius: 10px;}
+        #Shutdown{position: relative;width: 120px;color: #000;background-color: #F55;border-radius: 10px;}
+    </style>
+    <script>
+        window.addEventListener("DOMContentLoaded",Init); //必須
+        function Init(){
+            GetSetting();
+            document.querySelector("#Apply").addEventListener("click",SendSetting);
+            document.querySelector("#Reboot").addEventListener("click",function(){
+                SystemCommand("reboot");
+            });
+            document.querySelector("#Shutdown").addEventListener("click",function(){
+                SystemCommand("shutdown");
+            });
+        }
+        function GetSetting(){
+            fetch("/getconfig").then(Resp=>{
+                return Resp.json();
+            }).then(Result=>{
+                document.querySelector("#AutoSplit").checked = Result["RecSplit"] == "True" ? true:false;
+                document.querySelector("#SplitSize").value = Result["RecSplitSize"];
+                document.querySelector("#NoSpaceDo").options[Number(Result["NoSpaceDo"]) - 1].selected = true;
+                document.querySelector("#AutoUpload").checked = Result["AutoUpload"] == "True" ? true:false;
+                document.querySelector("#AutoUploadTiming").options[Number(Result["AutoUploadTiming"]) - 1].selected = true;
+                document.querySelector("#AutoUploadStorage").value = Result["AutoUploadSpace"];
+                document.querySelector("#AutoUploadURL").value = Result["AutoUploadURL"];
+                document.querySelector("#AutoRecConvert").checked = Result["AutoRecConvert"] == "True" ? true:false;
+                document.querySelector("#AutoRemoveh264").checked = Result["AutoRemoveh264"] == "True" ? true:false;
+                document.querySelector("#ConvxN").value = Result["ConvxN"];
+            });
+        }
+        function SendSetting(){
+            let URL = "/setconfig?";
+            URL += "RecSplit=" + (document.querySelector("#AutoSplit").checked ? "True":"False");
+            URL += "&RecSplitSize=" + document.querySelector("#SplitSize").value;
+            URL += "&NoSpaceDo=" + document.querySelector("#NoSpaceDo").value.substr(0,1);
+            URL += "&AutoUpload=" + (document.querySelector("#AutoUpload").checked ? "True":"False");
+            URL += "&AutoUploadTiming=" + document.querySelector("#AutoUploadTiming").value.substr(0,1);
+            URL += "&AutoUploadSpace=" + document.querySelector("#AutoUploadStorage").value;
+            URL += "&AutoUploadURL=" + document.querySelector("#AutoUploadURL").value;
+            URL += "&AutoRecConvert=" + (document.querySelector("#AutoRecConvert").checked ? "True":"False");
+            URL += "&AutoRemoveh264=" + (document.querySelector("#AutoRemoveh264").checked ? "True":"False");
+            URL += "&ConvxN=" + document.querySelector("#ConvxN").value;
+            fetch(URL).then(Resp=>{
+                if (Resp.ok){
+                    alert("設定を保存しました");
+                }else{
+                    alert("設定に失敗しました");
+                }
+            });
+        }
+        function SystemCommand(mode=""){
+            let msg = "";
+            if(mode == "shutdown"){
+                msg = "シャットダウン";
+            } else if(mode == "reboot"){
+                msg = "再起動";
+            } else {
+                return;
+            }
+            let result = window.confirm(msg + "しますか?");
+            if (result){
+                fetch("/System?cmd=" + mode);
+            }
+        }
+    </script>
+</HEAD>
+<body>
+    <div id="root">
+        <h1>設定</h1>
+        <hr>
+        <fieldset>
+            <legend>録画設定</legend>
+            <label><input type="checkbox" id="AutoSplit">ファイルサイズで分割する</label>:<input type="text" id="SplitSize">MB<br><br>
+            ストレージ残量低下時 <select id="NoSpaceDo">
+                <option>1:録画を停止する</option>
+                <option>2:古いデータを削除する</option>
+            </select>
+        </fieldset>
+        <br>
+        <fieldset>
+            <legend>ネットワーク設定</legend>
+            <label><input type="checkbox" id="AutoUpload">自動アップロードを行う</label><br><br>
+            送信のタイミング <select id="AutoUploadTiming">
+                <option>1:常に試行</option>
+                <option>2:ストレージ残量低下時</option>
+            </select><br>
+            残量閾値<input type="text" id="AutoUploadStorage">%
+            <br><br>
+            自動送信先URL<input type="text" id="AutoUploadURL">
+        </fieldset>
+        <br>
+        <fieldset>
+            <legend>録画データ変換設定</legend>
+            <label><input type="checkbox" id="AutoRecConvert">自動で変換する</label><br>
+            <label><input type="checkbox" id="AutoRemoveh264">変換後にh264を削除する</label><br>
+            倍速変換 <input type="text" id="ConvxN">x
+        </fieldset>
+        <button id="Apply">適用</button>
+        <HR>
+        <a href="/">TOP</a>
+    </div>
+    <div id="System">
+        <button id="Reboot">再起動</button><br>
+        <button id="Shutdown">シャットダウン</button>
+    </div>
+</body>
+
+</HTML>

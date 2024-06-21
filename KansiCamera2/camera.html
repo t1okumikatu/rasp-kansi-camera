@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<HTML>
+<HEAD>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>監視カメラ</title>
+    <style>
+        #root{text-align: center;}
+        #stream_img{position: fixed;top: 0;left: 0;right: 0;margin: auto; z-index: 1;}
+        #streamcamv{position: fixed;top: 0;left: 0;right: 0;margin: auto;z-index: 2;}
+        #Button_Menu{position: absolute;bottom: 0%;right: 0%;z-index: 15;width: auto;height: auto;font-size: 14px;background-color: #FC0;color: #000;border-radius: 10%;}
+        #Menu{position: absolute;bottom: 0; right: 0;width: 300px; margin:0 auto; background-color: #EEE;z-index: 10;border-radius: 10px;border-style:solid ;border-color: #000;}
+        
+        #Menu_CameraSetting{position: absolute;bottom: 0; left: 0;width: 320px; margin:0 auto; background-color: #EEE;z-index: 11;border-radius: 10px;border-style:solid ;border-color: #000;}
+        #Menu_CameraSetting_in{display: flex;justify-content: center;font-size: 12px;} /* 横2列実現用*/
+        #CamConfig1{position: relative;width: 180px;}
+        #CamConfig2{position: relative;width: 180px;}
+        #Button_Stream{position: relative;width: 120px;height: auto;font-size: 14px;background-color: #CAF;color: #000;border-radius: 10px;}
+        #Button_StreamShoot{position: relative;width: 120px;height: auto;font-size: 14px;background-color: #5CC;color: #000;border-radius: 10px;}
+        #Button_TimelapseShoot{position: relative;width: 120px;height: auto;font-size: 14px;background-color: #FC5;color: #000;border-radius: 10px;}
+        #Button_Rec{position: relative;width: 120px;height: auto;font-size: 14px;background-color: #F58;color: #000;border-radius: 10px;}
+        #Button_Light{position: relative;width: 120px;height: auto;font-size: 14px;background-color: #EEE;color: #000;border-radius: 10px;}
+        #Button_CameraSetting{position: absolute;bottom: 0%;left: 0%;z-index: 16;width: auto;height: auto;font-size: 14px;background-color: #FC0;color: #000;border-radius: 10%;}
+        #Setting_Mirror{position: relative;width: 120px;height: auto;font-size: 14px;background-color: #AFA;color: #000;border-radius: 10px;}
+        #Setting_MirrorUpDown{position: relative;width: 120px;height: auto;font-size: 14px;background-color: #FAA;color: #000;border-radius: 10px;}
+        
+        
+
+        #Menu_Timelapse{position: absolute;bottom: 10%;left: 0; right: 0;width: 220px; margin:0 auto; background-color: #EEE;z-index: 20;border-radius: 10px;border-style:solid ;border-color: #000;}
+        #Timelapse_Time{position: relative;width: 80px;height: auto;}
+        #Timelapse_Start{position: relative;width: 90px;height: auto;font-size: 14px;background-color: #CFC;color: #000;border-radius: 10px;}
+        #Timelapse_Cancel{position: relative;width: 90px;height: auto;font-size: 14px;background-color: #FCC;color: #000;border-radius: 10px;}
+
+        .cvnumber{position: relative;width: 50px;}
+
+
+    </style>
+    <script src="camera.js"></script>
+    <script src="RMath.js"></script>
+</HEAD>
+<body>
+    <div id="root">
+        <!-- ######################################################################################## -->
+        <img id="stream_img" src="camimage.png">
+        <canvas id="streamcamv" width="0" height="0"></canvas>
+        <!-- ######################################################################################## -->
+        <button id="Button_Menu">メニュー</button>
+        <div id="Menu">
+            <h3>メニュー</h3>
+            <fieldset>
+                <legend>カメラ操作</legend>
+                <button id="Button_Stream">ストリーム開始</button>
+                <button id="Button_Rec">録画開始</button><br>
+                <button id="Button_StreamShoot">ストリーム撮影</button>
+                <button id="Button_TimelapseShoot">タイムラプス</button><br>
+                <label><input type="checkbox" id="AutoDLCapture">自動ダウンロード</label><br>
+                <button id="Button_Light">ライト</button><br>
+            </fieldset>
+            <fieldset>
+                <legend>リンク</legend>
+                <a href="/captures">画像のダウンロード</a><br>
+                <a href="/records">動画のダウンロード</a><br>
+                <a href="/timelapses">タイムラプス管理</a><br>
+                <a href="/logout">ログアウト</a><br>
+                <a href="/">TOP</a><br>
+            </fieldset>
+        </div>
+        <!-- ######################################################################################## -->
+        <div id="Menu_Timelapse">
+            <h3>タイムラプス撮影</h3>
+            撮影間隔:<input type="number" id="Timelapse_Time" value="10">秒<br><br>
+            <button id="Timelapse_Start">開始</button>
+            <button id="Timelapse_Cancel">キャンセル</button>
+        </div>
+        <!-- ######################################################################################## -->
+        <button id="Button_CameraSetting">カメラ</button>
+        <div id="Menu_CameraSetting">
+            <h3>カメラ設定</h3>
+            <div id="Menu_CameraSetting_in">
+                <div id="CamConfig1">
+                    <fieldset>
+                        <legend>解像度</legend>
+                        <select id="Setting_Resolution">
+                            <option>320x240</option>
+                            <option>640x480</option>
+                            <option>800x600</option>
+                            <option>1024x768</option>
+                            <option>1600x1200</option>
+                            <!--<option>2592x1944</option> -->
+                            <option>1024x576</option>
+                            <option>1280x720</option>
+                            <option>1920x1080</option>
+                        </select>
+                    </fieldset>
+                    <fieldset>
+                        <legend>フレームレート</legend>
+                        <select id="Setting_FlameRate">
+                            <option>2</option>
+                            <option>5</option>
+                            <option>10</option>
+                            <option>20</option>
+                            <option>30</option>
+                        </select>
+                    </fieldset>
+                    <fieldset>
+                        <legend>ISO</legend>
+                        <select id="Setting_Iso">
+                            <option>0</option>
+                            <option>100</option>
+                            <option>200</option>
+                            <option>320</option>
+                            <option>400</option>
+                            <option>500</option>
+                            <option>640</option>
+                            <option>800</option>
+                            <option>1600</option>
+                        </select>
+                    </fieldset>
+                    <fieldset>
+                        <legend>輝度</legend>
+                        <input type="range" id="Setting_Brightness" min="0" max="100" value="50"><a id="Brightness_Value"></a>
+                    </fieldset>
+                    <fieldset>
+                        <legend>コントラスト</legend>
+                        <input type="range" id="Setting_contrast" min="-100" max="100" value="0"><a id="contrast_Value"></a>
+                    </fieldset>
+                    <fieldset>
+                        <legend>日付のサイズ</legend>
+                        <input type="range" id="Setting_fontsize" min="0" max="160" value="24"><a id="fontsize_Value"></a>
+                    </fieldset>
+                    <fieldset>
+                        <legend>向き補正</legend>
+                        <button id="Setting_Mirror">左右反転</button><br>
+                        <button id="Setting_MirrorUpDown">上下反転</button>
+                    </fieldset>
+                </div>
+                <div id="CamConfig2">
+                    <fieldset>
+                        <legend>モード</legend>
+                        <select id="Setting_Mode">
+                            <option>picam</option>
+                            <option>opencv</option>
+                        </select>
+                    </fieldset>
+                    <fieldset>
+                        <legend>OpenCV設定</legend>
+                        動体検知:
+                        <select id="Setting_cv_MotionEnable">
+                            <option>無効</option>
+                            <option>有効</option>
+                        </select>
+                        <br>
+                        閾値:
+                        <input type="number" id="Setting_cv_Motion_Threshold" class="cvnumber">px
+                        <br>
+                        プレビュー:
+                        <select id="Setting_cv_Motion_Preview">
+                            <option>無効</option>
+                            <option>有効</option>
+                        </select>                     
+                        <br>
+                        録画制御:
+                        <select id="Setting_cv_MotionTrigger">
+                            <option>無効</option>
+                            <option>有効</option>
+                        </select>
+                        <br>
+                        継続時間:
+                        <input type="number" id="Setting_cv_Recordingtime" class="cvnumber">秒
+                        <br>
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+        <br>
+        </div>
+        <!-- ######################################################################################## -->
+    </div>
+    <div id="tmp"></div>
+</body>
+</HTML>

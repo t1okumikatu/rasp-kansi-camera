@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<HTML>
+<HEAD>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>{{TITLE | safe}}</title>
+    <style>
+        #root{text-align: center;}
+        #Back{position: fixed;top: 0;left: 0;background-color: #EA0;font-size: 16px;}
+        #Next{position: fixed;top: 0;right: 0;background-color: #0AE;font-size: 16px;}
+
+        #Group{display: flex;justify-content: center;}
+
+        #Menu{position: fixed;text-align: center; left: 0;right: 0;margin: auto; top: 5%;width: 300px; border-radius: 10px;background-color: #EEE;border-style: solid;}
+        #Button_DownloadZIP{position: relative;background-color: #99F;font-size: 16px;width: 200px;height: 40px;}
+        #Button_DownloadMP4{position: relative;background-color: #AFA;font-size: 16px;width: 200px;height: 40px;}
+        #Button_Remove{position: relative;background-color: #FAA;font-size: 16px;width: 200px;height: 40px;}
+        #Button_Cancel{position: relative;background-color: #EAE;font-size: 16px;width: 200px;height: 40px;}
+        #Box_FPS{position: relative;width: 50px;}
+    </style>
+    <script>
+        window.addEventListener("DOMContentLoaded",Init); //必須
+        filename = ""
+        function Init(){
+            let NextButton = document.querySelector("#Next");
+            let BackButton = document.querySelector("#Back");
+            NextButton.disabled = {{NextDisabled | safe }};
+            BackButton.disabled = {{BackDisabled | safe }};
+            NextButton.addEventListener("click",function(){
+                window.location.href="/captures?page={{NextPage | safe }}"
+            });BackButton.addEventListener("click",function(){
+                window.location.href="/captures?page={{BackPage | safe }}"
+            });
+            document.querySelector("#Menu").style.display = "none";
+            document.querySelector("#Button_Cancel").addEventListener("click",function(){
+                document.querySelector("#Menu").style.display = "none";
+            });
+
+            document.querySelector("#Button_Remove").addEventListener("click",function(){
+                document.querySelector("#Menu").style.display = "none";
+                fetch("/rmfiles?name=" + filename);
+                window.setTimeout(function(){window.location.reload();},1000);
+            });
+            
+            document.querySelector("#Button_DownloadMP4").addEventListener("click",function(){
+                document.querySelector("#Fname").innerHTML = "MP4に変換中";
+                MakeData("mp4");
+            });
+            document.querySelector("#Button_DownloadZIP").addEventListener("click",function(){
+                document.querySelector("#Fname").innerHTML = "ZIP圧縮中";
+                MakeData("zip");
+            });
+        }
+        function Showmsg(e){
+            document.querySelector("#Menu").style.display = "block";
+            filename = e.src.replace(/\\/g, '/').replace(/^[^/]*\/\/[^/]*/, '');
+            filename = filename.split("/").slice(0,-1).join("/");
+            document.querySelector("#Fname").innerHTML = filename;
+        }
+        function MakeData(Mode){
+            let URL = "/timelapsescgi?mode=" + Mode + "&file=" + filename + "&fps=" + document.querySelector("#Box_FPS").value;
+            fetch(URL);
+            window.setTimeout(MakeDataStatus,1000);
+        }
+        function MakeDataStatus(){
+            fetch("/timelapsescgistatus")
+            .then(Responce=>{
+                return Responce.text();
+            }).then(text=>{
+                if(text == ""){
+                    let ten = document.querySelector("#ten").innerHTML;
+                    if(ten.length >= 3){
+                        ten = ".";
+                    }else{
+                        ten += ".";
+                    }
+                    document.querySelector("#ten").innerHTML = ten;
+                    window.setTimeout(MakeDataStatus,1000);
+                } else {
+                    DLData(text);
+                    document.querySelector("#Menu").style.display = "none";
+                }
+            });
+        }
+        function DLData(url){
+            let link = document.createElement('a');
+            link.download = url.split('/').pop();
+            link.href = url;
+            link.click();
+        }
+    </script>
+</HEAD>
+<body>
+    <div id="root">
+        <h1>{{TITLE | safe}}</h1>
+        <HR>
+        <div id="CaptureArea">
+            {{Inserthtml | safe }}
+        </div>
+        <button id="Back">前のページ</button> <button id="Next">次のページ</button>
+        <HR>
+        <a href="/">TOP</a>
+    </div>
+    <div id="Menu">
+        <h3>メニュー</h3>
+        <a id="Fname"></a><a id="ten"></a><br>
+        <fieldset>
+            <legend>ファイル操作</legend>
+            <button id="Button_DownloadZIP">ZIPをダウンロード</button><br>
+            <button id="Button_DownloadMP4">MP4をダウンロード</button><br>
+            <button id="Button_Remove">削除</button><br>
+            <button id="Button_Cancel">キャンセル</button><br>
+        </fieldset>
+        <fieldset>
+            <legend>MP4設定</legend>
+            FPS(2以上)<input type="text" id="Box_FPS" value="2">
+        </fieldset>
+    </div>
+</body>
+</HTML>

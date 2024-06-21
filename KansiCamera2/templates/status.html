@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<HTML>
+<HEAD>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>ステータス</title>
+    <style>
+        #root{text-align: center;}
+    </style>
+    <script>
+        window.addEventListener("DOMContentLoaded",Init); //必須
+        function Init(){
+            ShowSD();
+        }
+        function ShowSD(){
+            let Percent = {{SDPercent | safe }};
+            let Canv = document.querySelector("#SDArea");
+            let Context = Canv.getContext("2d");
+            Context.fillStyle = "#CFC";
+            Context.strokeStyle = "#000";
+            Context.fillRect(0,0,300*Percent/100,20);
+            Context.strokeRect(0,0,300,20);
+            document.querySelector("#SDNum").innerHTML = Percent + "%"
+        }
+
+    </script>
+</HEAD>
+<body>
+    <div id="root">
+        <h1>ステータス</h1><hr>
+        SDカード残量:<canvas id="SDArea" width="300" height="20"></canvas><a id="SDNum"></a>
+        <hr>
+        <a href="/">TOP</a>
+    </div>
+</body>
+
+</HTML>

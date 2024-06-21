@@ -1,0 +1,11 @@
+[Unit]
+Description=KansiKamera
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/Data/Camera
+ExecStart=/Data/Camera/Run.sh
+
+[Install]
+WantedBy=multi-user.target network-online.target

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<HTML>
+<HEAD>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>ログイン</title>
+    <style>
+        #root{text-align: center;}
+        #SUBMIT{position: relative;width: 100px;height: 30px; background-color: #CFC;border-radius: 10px;}
+    </style>
+    <script>
+        window.addEventListener("DOMContentLoaded",Init);
+        let Font = "arial black";
+        function Init(){
+            document.querySelector("#SUBMIT").addEventListener("click",Login);
+        }
+        function Login(){
+            document.querySelector("#SUBMIT").disabled = !false;
+            let msg = document.querySelector("#msg");
+            let USERNAME = document.querySelector("#USER").value;
+            let PASSWD = document.querySelector("#PASS").value;
+            msg.innerHTML = "ログイン中";
+
+            let Data = new FormData();
+            Data.append("user",USERNAME);
+            Data.append("pass",PASSWD);
+            fetch("/DoLogin",{
+                method:"POST",
+                body:Data
+            })
+            .then(res=>{
+                return res.text();
+            })
+            .then(text => {
+                if(/Fail/.exec(text)){
+                    msg.innerHTML = "ログイン失敗";
+					document.querySelector("#SUBMIT").disabled = !true;
+					let PASSWD = document.querySelector("#PASS").value = "";
+                } else {
+                    msg.innerHTML = "ログイン完了";
+                    window.setTimeout(function(){
+                        window.location.href = "/";
+                    },1);
+                }
+            })
+        }
+    </script>
+</HEAD>
+<body>
+    <div id="root">
+        <h1>ログイン</h1><hr>
+        ユーザー名<BR>
+        <input type="text" id="USER"><BR>
+        パスワード<BR>
+        <input type="password" id="PASS"><BR>
+        <button id="SUBMIT">ログイン</button><BR>
+        <div id="msg"></div>
+        <HR>
+		<a href="/">TOP</a>
+    </div>
+</body>
+</HTML>
